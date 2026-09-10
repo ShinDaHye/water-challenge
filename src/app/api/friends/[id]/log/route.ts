@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import db from "@/lib/db";
+import sql from "@/lib/db";
 import { todayStr } from "@/lib/date";
 import { syncStickerForDate } from "@/lib/achievements";
 
@@ -10,9 +10,10 @@ export async function POST(
   const { id } = await params;
   const friendId = Number(id);
 
-  const friend = db
-    .prepare(`SELECT id, daily_goal_ml as dailyGoalMl FROM friends WHERE id = ?`)
-    .get(friendId) as { id: number; dailyGoalMl: number } | undefined;
+  const friends = await sql<
+    { id: number; dailyGoalMl: number }[]
+  >`SELECT id, daily_goal_ml as "dailyGoalMl" FROM friends WHERE id = ${friendId}`;
+  const friend = friends[0];
 
   if (!friend) {
     return NextResponse.json({ error: "친구를 찾을 수 없어요" }, { status: 404 });
@@ -29,11 +30,9 @@ export async function POST(
   }
 
   const today = todayStr();
-  db.prepare(
-    `INSERT INTO logs (friend_id, date, amount_ml) VALUES (?, ?, ?)`
-  ).run(friendId, today, amountMl);
+  await sql`INSERT INTO logs (friend_id, date, amount_ml) VALUES (${friendId}, ${today}, ${amountMl})`;
 
-  syncStickerForDate(friendId, today, friend.dailyGoalMl);
+  await syncStickerForDate(friendId, today, friend.dailyGoalMl);
 
   return NextResponse.json({ ok: true });
 }

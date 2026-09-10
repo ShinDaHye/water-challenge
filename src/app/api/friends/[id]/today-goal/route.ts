@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import db from "@/lib/db";
+import sql from "@/lib/db";
 import { todayStr } from "@/lib/date";
 import { syncStickerForDate } from "@/lib/achievements";
 
@@ -10,9 +10,10 @@ export async function POST(
   const { id } = await params;
   const friendId = Number(id);
 
-  const friend = db
-    .prepare(`SELECT id, daily_goal_ml as dailyGoalMl FROM friends WHERE id = ?`)
-    .get(friendId) as { id: number; dailyGoalMl: number } | undefined;
+  const friends = await sql<
+    { id: number; dailyGoalMl: number }[]
+  >`SELECT id, daily_goal_ml as "dailyGoalMl" FROM friends WHERE id = ${friendId}`;
+  const friend = friends[0];
   if (!friend) {
     return NextResponse.json({ error: "친구를 찾을 수 없어요" }, { status: 404 });
   }
@@ -28,13 +29,14 @@ export async function POST(
   }
 
   const today = todayStr();
-  db.prepare(
-    `INSERT INTO daily_goal_overrides (friend_id, date, goal_ml) VALUES (?, ?, ?)
-     ON CONFLICT (friend_id, date) DO UPDATE SET goal_ml = excluded.goal_ml`
-  ).run(friendId, today, goalMl);
+  await sql`
+    INSERT INTO daily_goal_overrides (friend_id, date, goal_ml)
+    VALUES (${friendId}, ${today}, ${goalMl})
+    ON CONFLICT (friend_id, date) DO UPDATE SET goal_ml = excluded.goal_ml
+  `;
 
   // 목표를 낮춰서 이미 마신 양이 새 목표를 넘겼다면 그 자리에서 스티커 발급
-  syncStickerForDate(friendId, today, friend.dailyGoalMl);
+  await syncStickerForDate(friendId, today, friend.dailyGoalMl);
 
   return NextResponse.json({ ok: true });
 }
@@ -46,9 +48,7 @@ export async function DELETE(
   const { id } = await params;
   const friendId = Number(id);
 
-  db.prepare(
-    `DELETE FROM daily_goal_overrides WHERE friend_id = ? AND date = ?`
-  ).run(friendId, todayStr());
+  await sql`DELETE FROM daily_goal_overrides WHERE friend_id = ${friendId} AND date = ${todayStr()}`;
 
   return NextResponse.json({ ok: true });
 }

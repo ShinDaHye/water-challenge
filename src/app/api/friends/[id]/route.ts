@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import db from "@/lib/db";
+import sql from "@/lib/db";
 import { lastNDates, todayStr } from "@/lib/date";
 import { getAchievedDates, getEffectiveGoal } from "@/lib/achievements";
 
@@ -12,29 +12,24 @@ export async function GET(
   const { id } = await params;
   const friendId = Number(id);
 
-  const friend = db
-    .prepare(
-      `SELECT id, name, emoji, daily_goal_ml as dailyGoalMl FROM friends WHERE id = ?`
-    )
-    .get(friendId) as
-    | { id: number; name: string; emoji: string; dailyGoalMl: number }
-    | undefined;
+  const friends = await sql<
+    { id: number; name: string; emoji: string; dailyGoalMl: number }[]
+  >`SELECT id, name, emoji, daily_goal_ml as "dailyGoalMl" FROM friends WHERE id = ${friendId}`;
+  const friend = friends[0];
 
   if (!friend) {
     return NextResponse.json({ error: "친구를 찾을 수 없어요" }, { status: 404 });
   }
 
   const dates = lastNDates(HISTORY_DAYS);
-  const rows = db
-    .prepare(
-      `SELECT date, SUM(amount_ml) as total FROM logs
-       WHERE friend_id = ? AND date >= ?
-       GROUP BY date`
-    )
-    .all(friendId, dates[0]) as { date: string; total: number }[];
+  const rows = await sql<{ date: string; total: number }[]>`
+    SELECT date, SUM(amount_ml)::int as total FROM logs
+    WHERE friend_id = ${friendId} AND date >= ${dates[0]}
+    GROUP BY date
+  `;
 
   const totalsByDate = new Map(rows.map((r) => [r.date, r.total]));
-  const achievedDates = getAchievedDates(friendId);
+  const achievedDates = await getAchievedDates(friendId);
   const achievedSet = new Set(achievedDates);
 
   const history = dates.map((date) => ({
@@ -45,7 +40,7 @@ export async function GET(
 
   const today = todayStr();
   const todayMl = totalsByDate.get(today) ?? 0;
-  const todayGoalMl = getEffectiveGoal(friendId, today, friend.dailyGoalMl);
+  const todayGoalMl = await getEffectiveGoal(friendId, today, friend.dailyGoalMl);
 
   return NextResponse.json({
     ...friend,
@@ -65,24 +60,20 @@ export async function PATCH(
   const { id } = await params;
   const friendId = Number(id);
 
-  const friend = db
-    .prepare(`SELECT id FROM friends WHERE id = ?`)
-    .get(friendId);
-  if (!friend) {
+  const existing = await sql`SELECT id FROM friends WHERE id = ${friendId}`;
+  if (existing.length === 0) {
     return NextResponse.json({ error: "친구를 찾을 수 없어요" }, { status: 404 });
   }
 
   const body = await request.json().catch(() => null);
-  const updates: string[] = [];
-  const values: (string | number)[] = [];
+  const updates: Record<string, string | number> = {};
 
   if (body?.name !== undefined) {
     const name = String(body.name).trim();
     if (!name) {
       return NextResponse.json({ error: "이름을 입력해주세요" }, { status: 400 });
     }
-    updates.push("name = ?");
-    values.push(name);
+    updates.name = name;
   }
 
   if (body?.emoji !== undefined) {
@@ -90,8 +81,7 @@ export async function PATCH(
     if (!emoji) {
       return NextResponse.json({ error: "이모지를 입력해주세요" }, { status: 400 });
     }
-    updates.push("emoji = ?");
-    values.push(emoji);
+    updates.emoji = emoji;
   }
 
   if (body?.dailyGoalMl !== undefined) {
@@ -102,18 +92,14 @@ export async function PATCH(
         { status: 400 }
       );
     }
-    updates.push("daily_goal_ml = ?");
-    values.push(dailyGoalMl);
+    updates.daily_goal_ml = dailyGoalMl;
   }
 
-  if (updates.length === 0) {
+  if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: "변경할 값이 없어요" }, { status: 400 });
   }
 
-  db.prepare(`UPDATE friends SET ${updates.join(", ")} WHERE id = ?`).run(
-    ...values,
-    friendId
-  );
+  await sql`UPDATE friends SET ${sql(updates)} WHERE id = ${friendId}`;
 
   return NextResponse.json({ ok: true });
 }
@@ -125,20 +111,11 @@ export async function DELETE(
   const { id } = await params;
   const friendId = Number(id);
 
-  const friend = db
-    .prepare(`SELECT id FROM friends WHERE id = ?`)
-    .get(friendId);
-  if (!friend) {
+  // logs / daily_goal_overrides / stickers는 FK에 걸린 ON DELETE CASCADE로 함께 삭제됨
+  const deleted = await sql`DELETE FROM friends WHERE id = ${friendId} RETURNING id`;
+  if (deleted.length === 0) {
     return NextResponse.json({ error: "친구를 찾을 수 없어요" }, { status: 404 });
   }
-
-  const deleteTx = db.transaction(() => {
-    db.prepare(`DELETE FROM logs WHERE friend_id = ?`).run(friendId);
-    db.prepare(`DELETE FROM daily_goal_overrides WHERE friend_id = ?`).run(friendId);
-    db.prepare(`DELETE FROM stickers WHERE friend_id = ?`).run(friendId);
-    db.prepare(`DELETE FROM friends WHERE id = ?`).run(friendId);
-  });
-  deleteTx();
 
   return NextResponse.json({ ok: true });
 }
