@@ -85,6 +85,9 @@ export default function Home() {
         {/* <p className="mt-2 text-center text-sky-700 dark:text-sky-300">
           오늘도 목표량을 채우고 스티커를 모아봐요!
         </p> */}
+        <p className="mt-2 text-center text-xs text-sky-500 dark:text-sky-400">
+          ⏰ 기록은 매일 아침 9시에 초기화돼요
+        </p>
 
         <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-2">
           {loading && (
