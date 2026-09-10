@@ -91,7 +91,7 @@ export default function FriendManager({
       onClick={onClose}
     >
       <div
-        className="max-h-[85vh] w-full max-w-sm overflow-y-auto rounded-2xl bg-white p-5 shadow-xl dark:bg-zinc-950"
+        className="max-h-[85vh] w-full max-w-sm overflow-y-auto overflow-x-hidden rounded-2xl bg-white p-5 shadow-xl dark:bg-zinc-950"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
@@ -125,18 +125,18 @@ export default function FriendManager({
                     <input
                       value={editEmoji}
                       onChange={(e) => setEditEmoji(e.target.value)}
-                      className="w-12 rounded-lg border border-sky-200 px-2 py-1 text-center dark:border-sky-800 dark:bg-zinc-900"
+                      className="w-12 min-w-0 shrink-0 rounded-lg border border-sky-200 px-2 py-1 text-center dark:border-sky-800 dark:bg-zinc-900"
                     />
                     <input
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
-                      className="flex-1 rounded-lg border border-sky-200 px-2 py-1 dark:border-sky-800 dark:bg-zinc-900"
+                      className="min-w-0 flex-1 rounded-lg border border-sky-200 px-2 py-1 dark:border-sky-800 dark:bg-zinc-900"
                     />
                     <input
                       type="number"
                       value={editGoal}
                       onChange={(e) => setEditGoal(e.target.value)}
-                      className="w-24 rounded-lg border border-sky-200 px-2 py-1 dark:border-sky-800 dark:bg-zinc-900"
+                      className="w-20 min-w-0 shrink-0 rounded-lg border border-sky-200 px-2 py-1 dark:border-sky-800 dark:bg-zinc-900"
                     />
                   </div>
                   <div className="flex gap-2">
@@ -192,20 +192,20 @@ export default function FriendManager({
               value={newEmoji}
               onChange={(e) => setNewEmoji(e.target.value)}
               placeholder="🐳"
-              className="w-12 rounded-lg border border-sky-200 px-2 py-1 text-center dark:border-sky-800 dark:bg-zinc-900"
+              className="w-12 min-w-0 shrink-0 rounded-lg border border-sky-200 px-2 py-1 text-center dark:border-sky-800 dark:bg-zinc-900"
             />
             <input
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="이름"
-              className="flex-1 rounded-lg border border-sky-200 px-2 py-1 dark:border-sky-800 dark:bg-zinc-900"
+              className="min-w-0 flex-1 rounded-lg border border-sky-200 px-2 py-1 dark:border-sky-800 dark:bg-zinc-900"
             />
             <input
               type="number"
               value={newGoal}
               onChange={(e) => setNewGoal(e.target.value)}
               placeholder="목표(ml)"
-              className="w-24 rounded-lg border border-sky-200 px-2 py-1 dark:border-sky-800 dark:bg-zinc-900"
+              className="w-20 min-w-0 shrink-0 rounded-lg border border-sky-200 px-2 py-1 dark:border-sky-800 dark:bg-zinc-900"
             />
           </div>
           <button

@@ -115,11 +115,11 @@ export default function StickerBoard({
         <div className="bg-white px-5 py-4 text-center">
           {isComplete ? (
             <p className="font-semibold text-sky-900">
-              🎉 스티커판을 다 채웠어요! 최고예요!
+              🎉 판을 다 채웠어요! 최고예요!
             </p>
           ) : (
             <p className="text-sky-800">
-              스티커 <span className="font-bold">{stickerCount}</span> / {TOTAL_SLOTS}개 모았어요
+              <span className="font-bold">{stickerCount}</span> / {TOTAL_SLOTS}개 모았어요
             </p>
           )}
         </div>

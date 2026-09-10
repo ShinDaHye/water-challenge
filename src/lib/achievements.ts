@@ -20,8 +20,6 @@ export async function getAchievedDates(friendId: number): Promise<string[]> {
   return rows.map((r) => r.date);
 }
 
-// 그날 섭취량 합이 그날의 목표량(임시 조정 반영)을 넘겼는데 아직 스티커가 없다면 하나 발급.
-// 이미 스티커가 있으면 조용히 무시(같은 날 두 번 붙지 않음, 목표를 나중에 낮춰도 이미 받은 스티커는 유지).
 export async function syncStickerForDate(
   friendId: number,
   date: string,
