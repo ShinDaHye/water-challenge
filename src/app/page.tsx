@@ -109,6 +109,11 @@ export default function Home() {
                       <span>{f.emoji}</span>
                       <span>{f.name}</span>
                       {f.todayAchieved && <span>🎉</span>}
+                      {f.todayLeaveType && (
+                        <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+                          🌴 {f.todayLeaveType}
+                        </span>
+                      )}
                     </div>
                     <div className="flex shrink-0 items-center gap-1">
                       <button
@@ -156,12 +161,6 @@ export default function Home() {
                         ))}
                       </div>
                     </>
-                  )}
-
-                  {f.todayLeaveType && (
-                    <p className="mt-1.5 text-xs font-medium text-amber-600 dark:text-amber-400">
-                      🌴 오늘은 {f.todayLeaveType}예요
-                    </p>
                   )}
 
                   <div className="mt-2">
