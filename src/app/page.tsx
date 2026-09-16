@@ -17,6 +17,7 @@ type Friend = {
   dailyGoalMl: number;
   todayMl: number;
   todayLeaveType: string | null;
+  todayLeaveMl: number;
   todayAchieved: boolean;
   stickerCount: number;
   achievedDates: AchievedDate[];
@@ -99,6 +100,14 @@ export default function Home() {
                 100,
                 Math.round((f.todayMl / f.dailyGoalMl) * 100)
               );
+              const leavePct = Math.min(
+                100,
+                Math.max(0, (f.todayLeaveMl / f.dailyGoalMl) * 100)
+              );
+              const waterPct = Math.min(
+                100 - leavePct,
+                Math.max(0, ((f.todayMl - f.todayLeaveMl) / f.dailyGoalMl) * 100)
+              );
               return (
                 <div
                   key={f.id}
@@ -170,10 +179,14 @@ export default function Home() {
                       </span>
                       <span>{pct}%</span>
                     </div>
-                    <div className="mt-1 h-2.5 w-full overflow-hidden rounded-full bg-sky-100 dark:bg-sky-950">
+                    <div className="mt-1 flex h-2.5 w-full overflow-hidden rounded-full bg-sky-100 dark:bg-sky-950">
                       <div
-                        className="h-full rounded-full bg-sky-500 transition-all"
-                        style={{ width: `${pct}%` }}
+                        className="h-full bg-amber-100 transition-all dark:bg-amber-950"
+                        style={{ width: `${leavePct}%` }}
+                      />
+                      <div
+                        className="h-full bg-sky-500 transition-all"
+                        style={{ width: `${waterPct}%` }}
                       />
                     </div>
                   </div>

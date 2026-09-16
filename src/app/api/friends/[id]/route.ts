@@ -41,17 +41,18 @@ export async function GET(
   const today = todayStr();
   const todayMl = totalsByDate.get(today) ?? 0;
 
-  const todayLeaveRows = await sql<{ leave_type: string }[]>`
-    SELECT leave_type FROM logs
+  const todayLeaveRows = await sql<{ leave_type: string; amount_ml: number }[]>`
+    SELECT leave_type, amount_ml FROM logs
     WHERE friend_id = ${friendId} AND date = ${today} AND leave_type IS NOT NULL
-    LIMIT 1
   `;
   const todayLeaveType = todayLeaveRows[0]?.leave_type ?? null;
+  const todayLeaveMl = todayLeaveRows.reduce((sum, r) => sum + r.amount_ml, 0);
 
   return NextResponse.json({
     ...friend,
     todayMl,
     todayLeaveType,
+    todayLeaveMl,
     todayAchieved: achievedDates.some((a) => a.date === today),
     stickerCount: achievedDates.length,
     achievedDates,

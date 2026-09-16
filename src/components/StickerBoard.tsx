@@ -108,7 +108,7 @@ export default function StickerBoard({
                             y={24 - 24 * ratio}
                             width="24"
                             height={24 * ratio}
-                            fill="#fbbf24"
+                            fill="#fef3c7"
                             clipPath={`url(#${clipId})`}
                           />
                         )}
