@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import sql from "@/lib/db";
 import { todayStr } from "@/lib/date";
-import { getAchievedDates, getEffectiveGoal } from "@/lib/achievements";
+import { getAchievedDates } from "@/lib/achievements";
 
 export async function GET() {
   const today = todayStr();
@@ -17,13 +17,20 @@ export async function GET() {
         WHERE friend_id = ${f.id} AND date = ${today}
       `;
       const todayMl = totalRows[0]?.total ?? 0;
-      const todayGoalMl = await getEffectiveGoal(f.id, today, f.dailyGoalMl);
+
+      const todayLeaveRows = await sql<{ leave_type: string }[]>`
+        SELECT leave_type FROM logs
+        WHERE friend_id = ${f.id} AND date = ${today} AND leave_type IS NOT NULL
+        LIMIT 1
+      `;
+      const todayLeaveType = todayLeaveRows[0]?.leave_type ?? null;
+
       const achievedDates = await getAchievedDates(f.id);
       return {
         ...f,
         todayMl,
-        todayGoalMl,
-        todayAchieved: achievedDates.includes(today),
+        todayLeaveType,
+        todayAchieved: achievedDates.some((a) => a.date === today),
         stickerCount: achievedDates.length,
         achievedDates,
       };

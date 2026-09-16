@@ -21,6 +21,10 @@ export async function POST(
 
   const body = await request.json().catch(() => null);
   const amountMl = Number(body?.amountMl);
+  const leaveType =
+    typeof body?.leaveType === "string" && body.leaveType.trim()
+      ? body.leaveType.trim()
+      : null;
 
   if (!Number.isFinite(amountMl) || amountMl <= 0) {
     return NextResponse.json(
@@ -30,7 +34,10 @@ export async function POST(
   }
 
   const today = todayStr();
-  await sql`INSERT INTO logs (friend_id, date, amount_ml) VALUES (${friendId}, ${today}, ${amountMl})`;
+  await sql`
+    INSERT INTO logs (friend_id, date, amount_ml, leave_type)
+    VALUES (${friendId}, ${today}, ${amountMl}, ${leaveType})
+  `;
 
   await syncStickerForDate(friendId, today, friend.dailyGoalMl);
 

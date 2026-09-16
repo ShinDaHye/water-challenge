@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import sql from "@/lib/db";
 import { lastNDates, todayStr } from "@/lib/date";
-import { getAchievedDates, getEffectiveGoal } from "@/lib/achievements";
+import { getAchievedDates } from "@/lib/achievements";
 
 const HISTORY_DAYS = 28;
 
@@ -30,7 +30,7 @@ export async function GET(
 
   const totalsByDate = new Map(rows.map((r) => [r.date, r.total]));
   const achievedDates = await getAchievedDates(friendId);
-  const achievedSet = new Set(achievedDates);
+  const achievedSet = new Set(achievedDates.map((a) => a.date));
 
   const history = dates.map((date) => ({
     date,
@@ -40,13 +40,19 @@ export async function GET(
 
   const today = todayStr();
   const todayMl = totalsByDate.get(today) ?? 0;
-  const todayGoalMl = await getEffectiveGoal(friendId, today, friend.dailyGoalMl);
+
+  const todayLeaveRows = await sql<{ leave_type: string }[]>`
+    SELECT leave_type FROM logs
+    WHERE friend_id = ${friendId} AND date = ${today} AND leave_type IS NOT NULL
+    LIMIT 1
+  `;
+  const todayLeaveType = todayLeaveRows[0]?.leave_type ?? null;
 
   return NextResponse.json({
     ...friend,
     todayMl,
-    todayGoalMl,
-    todayAchieved: achievedDates.includes(today),
+    todayLeaveType,
+    todayAchieved: achievedDates.some((a) => a.date === today),
     stickerCount: achievedDates.length,
     achievedDates,
     history,

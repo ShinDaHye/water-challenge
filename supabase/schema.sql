@@ -15,6 +15,9 @@ create table if not exists logs (
   friend_id bigint not null references friends(id) on delete cascade,
   date text not null,
   amount_ml integer not null,
+  -- 연차/반차/반반차 프리셋으로 적립된 기록이면 그 라벨("연차" 등)이 들어가고,
+  -- 실제로 물 마셔서 기록한 경우 null
+  leave_type text,
   created_at timestamptz not null default now()
 );
 

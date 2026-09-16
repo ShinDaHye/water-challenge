@@ -1,8 +1,17 @@
 import { formatMD } from "@/lib/date";
+import { leaveRatio } from "@/lib/leave";
+
+const DROP_PATH =
+  "M12 2C12 2 5 10.5 5 15.5C5 19.09 8.13 22 12 22C15.87 22 19 19.09 19 15.5C19 10.5 12 2 12 2Z";
+
+type AchievedDate = {
+  date: string;
+  leaveType: string | null;
+};
 
 type StickerBoardProps = {
   name: string;
-  achievedDates: string[];
+  achievedDates: AchievedDate[];
   onClose: () => void;
 };
 
@@ -70,6 +79,10 @@ export default function StickerBoard({
           >
             {slots.map((num) => {
               const earned = num <= filled;
+              const entry = earned ? achievedDates[num - 1] : null;
+              const isLeave = !!entry?.leaveType;
+              const ratio = isLeave ? leaveRatio(entry!.leaveType) : 0;
+              const clipId = `drop-clip-${num}`;
               return (
                 <div
                   key={num}
@@ -77,19 +90,31 @@ export default function StickerBoard({
                     earned ? "bg-sky-400/20" : "bg-sky-300/60"
                   }`}
                 >
-                  {earned ? (
+                  {entry ? (
                     <div className="relative flex h-[115%] w-[115%] items-center justify-center">
                       <svg
                         viewBox="0 0 24 24"
                         className="absolute inset-0 h-full w-full drop-shadow"
                       >
-                        <path
-                          d="M12 2C12 2 5 10.5 5 15.5C5 19.09 8.13 22 12 22C15.87 22 19 19.09 19 15.5C19 10.5 12 2 12 2Z"
-                          fill="white"
-                        />
+                        <defs>
+                          <clipPath id={clipId}>
+                            <path d={DROP_PATH} />
+                          </clipPath>
+                        </defs>
+                        <path d={DROP_PATH} fill="white" />
+                        {isLeave && (
+                          <rect
+                            x="0"
+                            y={24 - 24 * ratio}
+                            width="24"
+                            height={24 * ratio}
+                            fill="#fbbf24"
+                            clipPath={`url(#${clipId})`}
+                          />
+                        )}
                       </svg>
                       <span className="relative mt-[18%] text-[9px] font-bold text-sky-700">
-                        {formatMD(achievedDates[num - 1])}
+                        {isLeave ? "🌴" : formatMD(entry.date)}
                       </span>
                     </div>
                   ) : (
